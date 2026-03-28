@@ -14,7 +14,8 @@ export async function POST(request: NextRequest) {
   const appointment = createAppointment(patientInfo);
 
   const baseUrl = request.nextUrl.origin;
-  const doctorUrl = `${baseUrl}/doctor-redirect/${appointment.id}`;
+  const encodedPatientInfo = encodeURIComponent(JSON.stringify(patientInfo));
+  const doctorUrl = `${baseUrl}/doctor-redirect/${appointment.id}?patientInfo=${encodedPatientInfo}`;
 
   console.log("\n========================================");
   console.log("NEW APPOINTMENT REQUEST");
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     id: appointment.id,
     url: doctorUrl,
+    patientInfo: patientInfo,
     message: "Appointment created. Check console for doctor URL.",
   });
 }
