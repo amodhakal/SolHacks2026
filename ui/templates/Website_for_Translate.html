@@ -31,7 +31,7 @@
         <p>What is your is address?</p>
         <input type="text" id="address" name="address">
         <p>What medical department do you want to visit?</p>
-        <select>
+        <select id="medical_department" name="medical_department">
             <option value="">--Please choose an option--</option>
             <option value="Doctor">Doctor</option>
             <option value="Eye Doctor">Eye Doctor</option>
@@ -39,14 +39,11 @@
             <option value="Pediatrician">Pediatrician</option>
             <option value="Psychiatrist">Psychiatrist</option>
             <option value="Other">Other</option>
-            
-        <p>Any additional information?</p>
         </select>
         <br><br>
 
         <p>Any additional information?</p>
-        <textarea type="textarea" id="additionalInfo" name="additionalInfo" placeholder="Enter any additional information here...">
-        </textarea>             
+        <textarea type="textarea" id="additionalInfo" name="additionalInfo" placeholder="Enter any additional information here..."></textarea>             
     
         <br><br>
         <button type="submit" id="SubmitButton">Submit</button>
