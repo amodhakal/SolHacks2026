@@ -21,3 +21,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function GET() {
+  return NextResponse.json({ status: "ok", message: "Webhook endpoint working" });
+}
