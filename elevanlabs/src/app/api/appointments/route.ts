@@ -13,22 +13,28 @@ export async function POST(request: NextRequest) {
 
   const appointment = createAppointment(patientInfo);
 
+  const { email, language, ...doctorInfo } = patientInfo;
+
   const baseUrl = request.nextUrl.origin;
   const encodedPatientInfo = encodeURIComponent(JSON.stringify(patientInfo));
-  const doctorUrl = `${baseUrl}/doctor-redirect/${appointment.id}?patientInfo=${encodedPatientInfo}`;
+  const spectateUrl = `${baseUrl}/spectate/${appointment.id}?patientInfo=${encodedPatientInfo}`;
 
   console.log("\n========================================");
   console.log("NEW APPOINTMENT REQUEST");
   console.log("========================================");
-  console.log("Patient Info:", JSON.stringify(patientInfo, null, 2));
-  console.log("\nDoctor URL:", doctorUrl);
+  console.log("Patient Info (for doctor):", JSON.stringify(doctorInfo, null, 2));
+  console.log("Email:", email || "Not provided");
+  console.log("Language:", language || "Not provided");
+  console.log("\nSpectate URL:", spectateUrl);
   console.log("========================================\n");
 
   return NextResponse.json({
     id: appointment.id,
-    url: doctorUrl,
+    url: spectateUrl,
     patientInfo: patientInfo,
-    message: "Appointment created. Check console for doctor URL.",
+    email: email,
+    language: language,
+    message: "Appointment created. Check console for spectate URL.",
   });
 }
 
