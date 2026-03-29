@@ -11,7 +11,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-linear-to-r from-white to-blue-200 flex items-center justify-center p-5">
       <div className="bg-white shadow-lg rounded-xl p-8 max-w-md w-full">
         <h1 className="text-2xl font-bold text-center mb-2 text-gray-800">
-          MediChat
+          Medilin
         </h1>
         <div className="space-y-4 overflow-y-auto max-h-64">
           {languages.map((lang) => (
