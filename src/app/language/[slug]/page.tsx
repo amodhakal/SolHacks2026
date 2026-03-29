@@ -1,6 +1,8 @@
 "use client";
 
 import { use } from "react";
+import { toast } from "react-toastify";
+import { submitIntakeForm } from "@/app/actions";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -11,14 +13,13 @@ type Language = "english" | "spanish" | "portuguese";
 const translations: Record<Language, Record<string, string>> = {
   english: {
     title: "Patient Intake Form",
-    introduction:
-      "This website is designed to provide translation services for users. It offers a user-friendly interface where users can input text in one language and receive translations in another language.",
     firstName: "First Name",
     lastName: "Last Name",
     email: "Email Address",
     dob: "Date of Birth",
     insurance: "Do you have insurance?",
     phone: "Doctor's Phone Number",
+    appointmentDateTime: "Appointment Date & Time",
     whoToVisit: "Medical Department",
     additionalInfo: "Additional Information",
     submit: "Submit",
@@ -31,17 +32,17 @@ const translations: Record<Language, Record<string, string>> = {
     pediatrician: "Pediatrician",
     psychiatrist: "Psychiatrist",
     other: "Other",
+    toastProcessing: "Being processed, you will receive an email after done",
   },
   spanish: {
     title: "Formulario de Admisión del Paciente",
-    introduction:
-      "Este sitio web está diseñado para proporcionar servicios de traducción. Ofrece una interfaz fácil de usar.",
     firstName: "Nombre",
     lastName: "Apellido",
     email: "Correo Electrónico",
     dob: "Fecha de Nacimiento",
     insurance: "¿Tiene seguro médico?",
     phone: "Número de Teléfono del Doctor",
+    appointmentDateTime: "Fecha y Hora de la Cita",
     whoToVisit: "Departamento Médico",
     additionalInfo: "Información Adicional",
     submit: "Enviar",
@@ -54,17 +55,18 @@ const translations: Record<Language, Record<string, string>> = {
     pediatrician: "Pediatra",
     psychiatrist: "Psiquiatra",
     other: "Otro",
+    toastProcessing:
+      "Siendo procesado, recibirá un correo electrónico cuando termine",
   },
   portuguese: {
     title: "Formulário de Admissão do Paciente",
-    introduction:
-      "Este site foi projetado para fornecer serviços de tradução. Oferece uma interface fácil de usar.",
     firstName: "Nome",
     lastName: "Sobrenome",
     email: "Endereço de Email",
     dob: "Data de Nascimento",
     insurance: "Você tem seguro?",
     phone: "Número de Telefone do Médico",
+    appointmentDateTime: "Data e Hora da Consulta",
     whoToVisit: "Departamento Médico",
     additionalInfo: "Informações Adicionais",
     submit: "Enviar",
@@ -77,6 +79,8 @@ const translations: Record<Language, Record<string, string>> = {
     pediatrician: "Pediatra",
     psychiatrist: "Psiquiatra",
     other: "Outro",
+    toastProcessing:
+      "Sendo processado, você receberá um e-mail quando terminar",
   },
 };
 
@@ -85,29 +89,18 @@ export default function LanguagePage({ params }: PageProps) {
   const lang = (slug as Language) || "english";
   const t = translations[lang] || translations.english;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const data = {
-      firstName: formData.get("firstName"),
-      lastName: formData.get("lastName"),
-      email: formData.get("email"),
-      dob: formData.get("dob"),
-      insurance: formData.get("insurance"),
-      address: formData.get("address"),
-      phone: formData.get("phone"),
-      medical_department: formData.get("medical_department"),
-      additionalInfo: formData.get("additionalInfo"),
-      language: lang,
-    };
-    console.log("Form submitted:", data);
+    formData.append("language", lang);
+    await submitIntakeForm(formData);
+    toast(t.toastProcessing);
   };
 
   return (
     <div className="min-h-screen bg-linear-to-r from-white to-blue-200 flex items-center justify-center p-5  text-gray-800">
       <div className="bg-white shadow-lg rounded-xl p-8 max-w-md w-full">
-        <h1 className="text-2xl font-bold text-center mb-4">{t.title}</h1>
-        <p className="text-gray-600 text-center mb-6">{t.introduction}</p>
+        <h1 className="text-2xl font-bold text-center mb-6">{t.title}</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -212,6 +205,22 @@ export default function LanguagePage({ params }: PageProps) {
               type="tel"
               id="phone"
               name="phone"
+              required
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[rgb(122,202,228)]"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="appointmentDateTime"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {t.appointmentDateTime}
+            </label>
+            <input
+              type="datetime-local"
+              id="appointmentDateTime"
+              name="appointmentDateTime"
               required
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[rgb(122,202,228)]"
             />
