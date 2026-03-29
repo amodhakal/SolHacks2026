@@ -14,10 +14,35 @@ export async function POST(request: NextRequest) {
     const appointment = createAppointment(translatedData);
 
     const baseUrl = request.nextUrl.origin;
-    const encodedPatientInfo = encodeURIComponent(JSON.stringify(translatedData));
+    const encodedPatientInfo = encodeURIComponent(
+      JSON.stringify(translatedData),
+    );
     const spectateUrl = `${baseUrl}/spectate/${appointment.id}?patientInfo=${encodedPatientInfo}`;
 
     console.log("Spectate URL:", spectateUrl);
+
+    const mockHospitalResponse = {
+      patientInfo: translatedData,
+      agreedDateTime: new Date(
+        Date.now() + Math.floor(Math.random() * 86400000),
+      ).toISOString(),
+      confirmed: true,
+      hospitalName: "City Medical Center",
+      referenceNumber: `HOSP-${appointment.id}`,
+    };
+
+    console.log("Hospital response:", mockHospitalResponse);
+
+    const webhookUrl = `${request.nextUrl.origin}/api/webhook`;
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: translatedData.email,
+        language: sourceLanguage,
+        info: mockHospitalResponse,
+      }),
+    });
 
     return NextResponse.json({
       success: true,

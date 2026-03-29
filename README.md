@@ -6,15 +6,16 @@
 
 Medilin is a proof-of-concept multilingual healthcare appointment booking platform designed to help patients who face language barriers or time constraints when scheduling medical appointments. 
 
-The vision is simple: patients fill out an intake form in their native language, and an AI agent automatically calls the clinic to book an appointment on their behalf. The patient receives a confirmation email—no phone calls, no language barriers, no hassle.
+The vision is simple: patients fill out an intake form in their native language, and an AI agent automatically calls the clinic to book an appointment on their behalf. The patient receives a confirmation email, so no phone calls, no language barriers, no hassle.
 
-**Current Demo Status:** This hackathon prototype demonstrates the core AI voice negotiation technology. Instead of calling real clinics, two AI agents simulate the conversation (patient representative and clinic scheduler) to show how the automated booking would work.
+**Current Demo Status:** This hackathon prototype demonstrates the core AI voice negotiation technology. When a patient submits an intake form, the system automatically simulates a hospital booking response with a negotiated appointment time (different from the requested time) and sends a confirmation email. The spectate URL allows optional observation of the AI agent conversation.
 
 ### How It Works
 
 1. **Patient Intake**: Users fill out a healthcare intake form in their preferred language
-2. **AI Voice Demo**: Two AI agents (powered by ElevenLabs) simulate a real-time conversation to negotiate an appointment time, demonstrating the technology that would be used when calling actual clinics
-3. **Confirmation**: Once the agents reach an agreement, the patient receives a confirmation email with appointment details in their chosen language
+2. **Automated Booking**: The system simulates a hospital response with a negotiated appointment time
+3. **Confirmation**: The patient automatically receives a confirmation email with appointment details in their chosen language
+4. **Optional Observation**: Users can visit the spectate URL to observe the AI agent conversation simulating the booking process
 
 ### Production Vision
 
@@ -24,8 +25,6 @@ In a production deployment, the AI agent would:
 - Manage conflicts and rescheduling
 - Integrate with clinic EMR/scheduling systems
 - Handle HIPAA compliance requirements
-
-**What This Demo Proves:** The multilingual voice AI technology works and can conduct natural appointment booking conversations. The simulated two-agent conversation showcases the interaction that would happen between our AI and a real clinic scheduler.
 
 ## Tech Stack
 
@@ -63,6 +62,8 @@ In a production deployment, the AI agent would:
 4. **Run the development server**
 ```bash
    npm run dev
+   # or
+   bun run dev
 ```
 
 5. **Open in browser**
@@ -70,16 +71,16 @@ In a production deployment, the AI agent would:
 
 ## How to Demo
 
-**Note:** The demo flow is intentionally manual to showcase the AI negotiation process. In production, this would all happen automatically in the background.
-
 1. Fill out and submit the intake form in your preferred language
+2. Get the email with the appointment information automatically
+
+### If you want to observe the AI agent conversation (Optional):
 2. Open the browser console (F12 or right-click → Inspect → Console)
-3. Copy the spectate URL shown in the console
-4. Navigate to the spectate URL to observe the AI agents
-5. Click "Start Conversation" to begin the simulated appointment booking call
-6. Listen as the two AI agents negotiate an appointment time
-7. Click "Stop" once the agents have reached an agreement
-8. Check your email for the confirmation message in the language you originally selected
+3. Copy the spectate URL shown in the console (optional - for observing the AI process)
+4. Navigate to the spectate URL
+5. Click "Start Conversation" to hear the simulated appointment booking call
+6. Click "Stop" once the agents have reached an agreement
+7. Check your email for the confirmation message in the language you originally selected
 
 ## Project Structure
 ```
