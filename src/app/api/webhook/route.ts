@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { translateFromEnglish } from "@/lib/translateFromEnglish";
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,30 +8,41 @@ export async function POST(request: NextRequest) {
 
     if (!email || !language || !info) {
       return NextResponse.json(
-        { error: "Missing required fields: email, language, and info are required" },
-        { status: 401 }
+        {
+          error:
+            "Missing required fields: email, language, and info are required",
+        },
+        { status: 401 },
       );
     }
 
-    console.log("\n========================================");
-    console.log("APPOINTMENT BOOKED - STORE_APPOINTMENT TOOL");
-    console.log("========================================");
-    console.log("Email:", email);
-    console.log("Language:", language);
-    console.log("Appointment Info:");
-    console.log(info);
-    console.log("========================================\n");
+    console.log(
+      `Webhook original: `,
+      JSON.stringify({ email, language, info }),
+    );
 
-    return NextResponse.json({ success: true });
+    const translatedMessage = await translateFromEnglish(info, language);
+    console.log(`Sending email to ${email}: ${translatedMessage}`);
+
+    // TODO: Send an email
+
+    return NextResponse.json({
+      success: true,
+      email,
+      translatedMessage,
+    });
   } catch (error) {
     console.error("Webhook error:", error);
     return NextResponse.json(
       { error: "Invalid request body" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
 
 export async function GET() {
-  return NextResponse.json({ status: "ok", message: "Webhook endpoint working" });
+  return NextResponse.json({
+    status: "ok",
+    message: "Webhook endpoint working",
+  });
 }

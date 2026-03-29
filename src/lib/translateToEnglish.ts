@@ -23,8 +23,6 @@ export async function translateToEnglish(
   sourceLanguage: string,
 ): Promise<Record<string, unknown>> {
   const textFieldsToTranslate = [
-    "firstName",
-    "lastName",
     "additionalInfo",
     "medical_department",
   ];
