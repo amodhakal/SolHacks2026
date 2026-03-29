@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         email: translatedData.email,
         language: sourceLanguage,
-        info: mockHospitalResponse,
+        info: JSON.stringify(mockHospitalResponse),
       }),
     });
 
