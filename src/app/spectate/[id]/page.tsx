@@ -72,6 +72,13 @@ export default function SpectatePage({
     });
   }, [searchParams]);
 
+  useEffect(() => {
+    const container = document.getElementById("transcript-container");
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [transcript]);
+
   const sendMessageToAgent = useCallback((message: string, agent: "A" | "B") => {
     const ws = agent === "A" ? wsARef.current : wsBRef.current;
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -145,6 +152,17 @@ export default function SpectatePage({
               const response = data.agent_response_event?.agent_response;
               if (response) {
                 console.log(`Agent ${agent} response:`, response);
+                
+                const role = agent === "A" ? "patient" : "receptionist";
+                setTranscript((prev) => [
+                  ...prev,
+                  {
+                    id: transcriptIdRef.current++,
+                    role,
+                    text: response,
+                    timestamp: new Date(),
+                  },
+                ]);
                 
                 if (agent === "A") {
                   setCurrentPatientText(response);
