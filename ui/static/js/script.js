@@ -1,7 +1,26 @@
+
 const myDialog = document.getElementById('myDialog');
 const ConfirmButton = document.getElementById('confirmSubmit');
 const CancelButton = document.getElementById('cancelSubmit');
 const SubmitButton = document.getElementById('SubmitButton');
+
+
+const questions = {
+    "introduction" : "This website is designed to provide translation services for users. It offers a user-friendly interface where users can input text in one language and receive translations in another language. The website supports multiple languages and uses advanced translation algorithms to ensure accurate and reliable translations.",
+    "firstName" : "What is your first name?",
+    "lastName" : "What is your last name?",
+    "email" : "What is your email address?",
+    "dob" : "What is your date of birth?",
+    "insurance" : "Do you have any insurance",
+    "address" : "What is your address?",
+    "whoToVisit" : "What medical department do you want to visit?",
+    "additionalInfo" : "Is there anything else you wish to tell us?"
+};
+
+document.getElementById("introduction").innerHTML = questions.introduction;
+document.getElementById("firstNameQuestion").innerHTML = questions.firstName;
+document.getElementById("lastNameQuestion").innerHTML = questions.lastName;
+
 
 SubmitButton.addEventListener('click', () => {
     myDialog.showModal();
