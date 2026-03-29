@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>MediChat</title>
+        <script src="static/js/script.js" defer></script>
+        <link rel="stylesheet" type="text/css" href="static/styles/style.css">
+
+
+    </head>
+    <body>
+        <h1>Website for Translate</h1>
+        <p id = "introduction"></p>
+        <p id = "firstNameQuestion"></p>
+        <input type="text" id="firstName" name="firstName">
+        <p id = "lastNameQuestion"></p>
+        <input type="text" id="lastName" name="lastName">
+        <p id = "emailQuestion"></p>
+        <input type="email" id="email" name="email">
+        <p id = "dobQuestion"></p>
+        <input type="date" id="dob" name="dob">
+        <p id = "insuranceQuestion"></p>
+        <input type="radio" id="insurance" name="insurance" value="yes">
+         <label for="insurance">Yes</label><br>
+         <input type="radio" id="insurance" name="insurance" value="no">
+         <label for="insurance">No</label><br>
+        <p id = "addressQuestion"></p>
+        <input type="text" id="address" name="address">
+        <p id = "whoToVisitQuestion"></p>
+        <select id="medical_department" name="medical_department">
+            <option value="">--Please choose an option--</option>
+            <option value="Doctor">Doctor</option>
+            <option value="Eye Doctor">Eye Doctor</option>
+            <option value="Dentist">Dentist</option>
+            <option value="Pediatrician">Pediatrician</option>
+            <option value="Psychiatrist">Psychiatrist</option>
+            <option value="Other">Other</option>
+        </select>
+        <br><br>
+
+        <p id = "additionalInfoQuestion"></p>
+        <textarea type="textarea" id="additionalInfo" name="additionalInfo" placeholder="Enter any additional information here..."></textarea>             
+    
+        <br><br>
+        <button type="submit" id="SubmitButton">Submit</button>
+         <style>
+           
+        </style>
+        <dialog id ="myDialog">
+            <h2>Are you sure you want to submit?</h2>
+            <button id="confirmSubmit">Submit</button>
+            <button id="cancelSubmit">Go back</button>
+        </dialog>
+    </body>
+</html>
