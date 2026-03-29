@@ -21,17 +21,21 @@ function calculateDelayWithJitter(attempt: number): number {
 export async function translateFromEnglish(
   text: string,
   targetLanguage: string,
-): Promise<string> {
+): Promise<{ subject: string; body: string }> {
   if (!text || text.trim() === "") {
-    return text;
+    return { subject: "", body: "" };
   }
 
-  const prompt = `You are a medical appointment translator. Translate the following appointment confirmation message from English to ${targetLanguage}. Translate it naturally as a professional email confirmation.
+  const prompt = `You are a medical appointment translator. Translate the following appointment confirmation message from English to ${targetLanguage}. Translate it as a professional email confirmation.
 
 Original English message:
 ${text}
 
-Return ONLY the translated message in ${targetLanguage}, formatted as a professional email confirmation. Do not include any explanation or additional text.`;
+Return ONLY a JSON object with the following structure (no other text):
+{
+  "subject": "The email subject line in ${targetLanguage}",
+  "body": "The email body in ${targetLanguage}, using HTML tags like <p>, <strong>, <ul>, <li> for formatting"
+}`;
 
   let lastError: Error | null = null;
 
@@ -54,7 +58,16 @@ Return ONLY the translated message in ${targetLanguage}, formatted as a professi
 
       const content = response.text?.trim() || "";
 
-      return content;
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("Failed to parse JSON response from translation");
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        subject: parsed.subject,
+        body: parsed.body,
+      };
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       console.error(

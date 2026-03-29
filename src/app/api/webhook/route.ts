@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { translateFromEnglish } from "@/lib/translateFromEnglish";
+import { Resend } from "resend";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, language, info } = body;
+    const requestBody = await request.json();
+    const { email, language, info } = requestBody;
 
     if (!email || !language || !info) {
       return NextResponse.json(
@@ -21,15 +22,28 @@ export async function POST(request: NextRequest) {
       JSON.stringify({ email, language, info }),
     );
 
-    const translatedMessage = await translateFromEnglish(info, language);
-    console.log(`Sending email to ${email}: ${translatedMessage}`);
+    const { subject, body } = await translateFromEnglish(info, language);
 
-    // TODO: Send an email
+    const resend = new Resend(process.env.RESEND_KEY);
+
+    const { data, error } = await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: [email],
+      subject: subject,
+      html: body,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    console.log(`Email sent to ${email}:`, data);
 
     return NextResponse.json({
       success: true,
       email,
-      translatedMessage,
+      subject,
     });
   } catch (error) {
     console.error("Webhook error:", error);
