@@ -20,6 +20,13 @@ const questions = {
 document.getElementById("introduction").innerHTML = questions.introduction;
 document.getElementById("firstNameQuestion").innerHTML = questions.firstName;
 document.getElementById("lastNameQuestion").innerHTML = questions.lastName;
+document.getElementById("emailQuestion").innerHTML = questions.email;
+document.getElementById("dobQuestion").innerHTML = questions.dob;
+document.getElementById("insuranceQuestion").innerHTML = questions.insurance;
+document.getElementById("addressQuestion").innerHTML = questions.address;
+document.getElementById("whoToVisitQuestion").innerHTML = questions.whoToVisit;
+document.getElementById("additionaalInfoQuestion").innerHTML = questions.additionalInfo;
+
 
 
 SubmitButton.addEventListener('click', () => {
