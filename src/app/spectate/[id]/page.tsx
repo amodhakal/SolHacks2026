@@ -12,12 +12,26 @@ interface TranscriptMessage {
   timestamp: Date;
 }
 
+interface PatientInfo {
+  email: string;
+  dob: string;
+  insurance: string;
+  phone: string;
+  appointmentDateTime: string;
+  language: string;
+  firstName: string;
+  lastName: string;
+  medical_department: string;
+  additionalInfo: string;
+}
+
 export default function SpectatePage({
   searchParams,
 }: {
   searchParams: Promise<{ patientInfo?: string }>;
 }) {
   const [patientInfo, setPatientInfo] = useState<string>("");
+  const [patientInfoObj, setPatientInfoObj] = useState<PatientInfo | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [patientSpeaking, setPatientSpeaking] = useState(false);
@@ -26,71 +40,37 @@ export default function SpectatePage({
   const [currentReceptionistText, setCurrentReceptionistText] = useState("");
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
   const [isEnded, setIsEnded] = useState(false);
-  const [spectatorMuted, setSpectatorMuted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const wsARef = useRef<WebSocket | null>(null);
   const wsBRef = useRef<WebSocket | null>(null);
   const transcriptIdRef = useRef(0);
   const waitingForBResponseRef = useRef(false);
   const waitingForAResponseRef = useRef(false);
-  const audioQueueRef = useRef<string[]>([]);
-  const isPlayingRef = useRef(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     searchParams.then((p) => {
+      console.log("Raw patientInfo query param:", p.patientInfo);
       if (p.patientInfo) {
-        setPatientInfo(decodeURIComponent(p.patientInfo));
+        const decoded = decodeURIComponent(p.patientInfo);
+        console.log("Decoded patientInfo:", decoded);
+        setPatientInfo(decoded);
+        try {
+          const parsed = JSON.parse(decoded);
+          console.log("Parsed patientInfoObj:", parsed);
+          setPatientInfoObj(parsed);
+          setMounted(true);
+        } catch (e) {
+          console.error("Failed to parse patient info:", e);
+          setMounted(true);
+        }
       } else {
         setError("Missing patient info");
+        setMounted(true);
       }
     });
   }, [searchParams]);
-
-  const playAudioFromQueue = useCallback(() => {
-    if (isPlayingRef.current || audioQueueRef.current.length === 0 || spectatorMuted) return;
-
-    isPlayingRef.current = true;
-    const base64 = audioQueueRef.current.shift()!;
-    
-    try {
-      const binaryString = atob(base64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      
-      const blob = new Blob([bytes], { type: "audio/mpeg" });
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      
-      audio.onended = () => {
-        URL.revokeObjectURL(url);
-        isPlayingRef.current = false;
-        if (audioQueueRef.current.length > 0) {
-          setTimeout(playAudioFromQueue, 100);
-        }
-      };
-      
-      audio.onerror = () => {
-        URL.revokeObjectURL(url);
-        isPlayingRef.current = false;
-        if (audioQueueRef.current.length > 0) {
-          setTimeout(playAudioFromQueue, 100);
-        }
-      };
-      
-      audio.play();
-    } catch (err) {
-      console.error("Audio play error:", err);
-      isPlayingRef.current = false;
-      if (audioQueueRef.current.length > 0) {
-        setTimeout(playAudioFromQueue, 100);
-      }
-    }
-  }, [spectatorMuted]);
 
   const sendMessageToAgent = useCallback((message: string, agent: "A" | "B") => {
     const ws = agent === "A" ? wsARef.current : wsBRef.current;
@@ -113,11 +93,18 @@ export default function SpectatePage({
 
         ws.onopen = () => {
           console.log(`Connected to Agent ${agent}`);
-          ws.send(
-            JSON.stringify({
-              type: "conversation_initiation_client_data",
-            })
-          );
+          const initData: Record<string, unknown> = {
+            type: "conversation_initiation_client_data",
+          };
+          
+          if (agent === "A" && patientInfoObj) {
+            initData.dynamic_variables = {
+              patient_info: JSON.stringify(patientInfoObj),
+            };
+            console.log("Sending dynamic variables to agent A:", initData.dynamic_variables);
+          }
+          
+          ws.send(JSON.stringify(initData));
         };
 
         ws.onmessage = (event) => {
@@ -130,12 +117,15 @@ export default function SpectatePage({
 
             case "conversation_initiation_client_data":
               console.log(`Agent ${agent} ready`);
-              if (agent === "A" && patientInfo) {
+              if (agent === "A" && patientInfoObj) {
+                const p = patientInfoObj;
+                const spectateText = `You are ${p.firstName} ${p.lastName}, a patient calling a hospital. Your details: email: ${p.email}, phone: ${p.phone}, DOB: ${p.dob}, insurance: ${p.insurance}, department: ${p.medical_department}, preferred language: ${p.language}. Additional info: ${p.additionalInfo}. Start the conversation by greeting and explaining why you're calling.`;
+                console.log("Patient info being sent to agent:", spectateText);
                 setTimeout(() => {
                   ws.send(
                     JSON.stringify({
                       type: "contextual_update",
-                      text: `You are a patient calling a hospital to book an appointment. Patient info: ${patientInfo}. Start the conversation by greeting and explaining why you're calling.`,
+                      text: spectateText,
                     })
                   );
                 }, 500);
@@ -188,15 +178,6 @@ export default function SpectatePage({
               }
               break;
 
-            case "audio":
-              const audioBase64 = data.audio_event?.audio_base_64;
-              if (audioBase64) {
-                console.log(`Agent ${agent} audio received, queue length:`, audioQueueRef.current.length);
-                audioQueueRef.current.push(audioBase64);
-                playAudioFromQueue();
-              }
-              break;
-
             case "user_transcript":
               console.log(`Agent ${agent} heard:`, data.user_transcription_event?.user_transcript);
               break;
@@ -238,7 +219,7 @@ export default function SpectatePage({
         resolve(ws);
       });
     },
-    [patientInfo, sendMessageToAgent, playAudioFromQueue]
+    [patientInfoObj, sendMessageToAgent]
   );
 
   const startConversation = useCallback(async () => {
@@ -269,23 +250,11 @@ export default function SpectatePage({
       wsBRef.current.close();
       wsBRef.current = null;
     }
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    audioQueueRef.current = [];
     setIsConnected(false);
     setIsEnded(true);
     setPatientSpeaking(false);
     setReceptionistSpeaking(false);
   }, []);
-
-  const toggleMute = useCallback(() => {
-    setSpectatorMuted((prev) => !prev);
-    if (spectatorMuted && audioRef.current) {
-      audioRef.current.pause();
-    }
-  }, [spectatorMuted]);
 
   if (error) {
     return (
@@ -458,10 +427,12 @@ export default function SpectatePage({
           {!isConnected && !isEnded ? (
             <button
               onClick={startConversation}
-              disabled={isConnecting}
+              disabled={!mounted || isConnecting || !patientInfoObj}
               className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              {isConnecting ? (
+              {!mounted || !patientInfoObj ? (
+                "Loading..."
+              ) : isConnecting ? (
                 <span className="flex items-center gap-2">
                   <svg
                     className="animate-spin h-5 w-5"
@@ -489,24 +460,12 @@ export default function SpectatePage({
               )}
             </button>
           ) : isConnected ? (
-            <>
-              <button
-                onClick={toggleMute}
-                className={`px-6 py-4 rounded-lg text-lg font-medium transition-colors ${
-                  spectatorMuted
-                    ? "bg-zinc-600 text-zinc-300 hover:bg-zinc-500"
-                    : "bg-yellow-600 text-white hover:bg-yellow-700"
-                }`}
-              >
-                {spectatorMuted ? "🔇 Unmute Audio" : "🔊 Spectator Audio"}
-              </button>
-              <button
-                onClick={stopConversation}
-                className="bg-red-600 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-red-700 transition-colors"
-              >
-                🔴 Stop Conversation
-              </button>
-            </>
+            <button
+              onClick={stopConversation}
+              className="bg-red-600 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-red-700 transition-colors"
+            >
+              Stop Conversation
+            </button>
           ) : null}
         </div>
 
