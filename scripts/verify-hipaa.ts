@@ -46,7 +46,7 @@ if (!isValidInitial) {
 // 3. Test Tamper Detection
 console.log('\nTesting Tamper Detection...');
 // Tamper with log[1] details
-(logs[1] as any).details = { field: 'unauthorized_tampering' };
+(logs[1] as unknown as { details?: Record<string, unknown> }).details = { field: 'unauthorized_tampering' };
 
 const isValidTampered = auditLogger.verifyChain();
 console.log('Audit chain verification after tampering:', isValidTampered ? 'VALID (FAILED TEST)' : 'INVALID (CORRECTLY DETECTED)');

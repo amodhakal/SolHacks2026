@@ -339,7 +339,7 @@ export default function SpectatePage({
                     key={i}
                     className="w-2 bg-blue-500 rounded-full animate-pulse"
                     style={{
-                      height: `${20 + Math.random() * 30}px`,
+                      height: `${[25, 45, 30, 50, 35][i]}px`,
                       animationDelay: `${i * 0.1}s`,
                     }}
                   />
@@ -383,7 +383,7 @@ export default function SpectatePage({
                     key={i}
                     className="w-2 bg-green-500 rounded-full animate-pulse"
                     style={{
-                      height: `${20 + Math.random() * 30}px`,
+                      height: `${[25, 45, 30, 50, 35][i]}px`,
                       animationDelay: `${i * 0.1}s`,
                     }}
                   />
