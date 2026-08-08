@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 
 const AGENT_A_ID = "agent_4101kmtj9kvzeq7b2chwarrvhq0g";
 const AGENT_B_ID = "agent_8901kmv2rdjpedx8pe0xh4mv605c";
@@ -66,7 +67,7 @@ export default function SpectatePage({
           setMounted(true);
         }
       } else {
-        setError("Missing patient info");
+        setError("Missing patient information in URL parameters.");
         setMounted(true);
       }
     });
@@ -108,7 +109,6 @@ export default function SpectatePage({
             initData.dynamic_variables = {
               patient_info: JSON.stringify(patientInfoObj),
             };
-            console.log("Sending dynamic variables to agent A:", initData.dynamic_variables);
           }
           
           ws.send(JSON.stringify(initData));
@@ -118,16 +118,10 @@ export default function SpectatePage({
           const data = JSON.parse(event.data);
 
           switch (data.type) {
-            case "conversation_initiation_metadata":
-              console.log(`Agent ${agent} metadata:`, data.conversation_initiation_metadata_event);
-              break;
-
             case "conversation_initiation_client_data":
-              console.log(`Agent ${agent} ready`);
               if (agent === "A" && patientInfoObj) {
                 const p = patientInfoObj;
                 const spectateText = `You are ${p.firstName} ${p.lastName}, a patient calling a hospital. Your details: email: ${p.email}, phone: ${p.phone}, DOB: ${p.dob}, insurance: ${p.insurance}, department: ${p.medical_department}, preferred language: ${p.language}. Additional info: ${p.additionalInfo}. Start the conversation by greeting and explaining why you're calling.`;
-                console.log("Patient info being sent to agent:", spectateText);
                 setTimeout(() => {
                   ws.send(
                     JSON.stringify({
@@ -151,8 +145,6 @@ export default function SpectatePage({
             case "agent_response":
               const response = data.agent_response_event?.agent_response;
               if (response) {
-                console.log(`Agent ${agent} response:`, response);
-                
                 const role = agent === "A" ? "patient" : "receptionist";
                 setTranscript((prev) => [
                   ...prev,
@@ -177,7 +169,7 @@ export default function SpectatePage({
                       waitingForBResponseRef.current = true;
                       sendMessageToAgent(response, "B");
                     }
-                  }, 2000);
+                  }, 2500);
                 } else {
                   setCurrentReceptionistText(response);
                   setReceptionistSpeaking(true);
@@ -191,13 +183,9 @@ export default function SpectatePage({
                       waitingForAResponseRef.current = true;
                       sendMessageToAgent(response, "A");
                     }
-                  }, 2000);
+                  }, 2500);
                 }
               }
-              break;
-
-            case "user_transcript":
-              console.log(`Agent ${agent} heard:`, data.user_transcription_event?.user_transcript);
               break;
 
             case "ping":
@@ -211,10 +199,6 @@ export default function SpectatePage({
               }, data.ping_event.ping_ms);
               break;
 
-            case "client_tool_call":
-              console.log(`Agent ${agent} tool call:`, data.client_tool_call);
-              break;
-
             default:
               break;
           }
@@ -226,7 +210,6 @@ export default function SpectatePage({
         };
 
         ws.onclose = () => {
-          console.log(`Disconnected from Agent ${agent}`);
           if (agent === "A") {
             setPatientSpeaking(false);
           } else {
@@ -276,226 +259,298 @@ export default function SpectatePage({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 text-xl">{error}</p>
+      <div className="min-h-screen bg-[#090d16] flex items-center justify-center text-red-400 p-6">
+        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center max-w-md shadow-2xl">
+          <h2 className="text-xl font-bold mb-2 text-white">Connection Error</h2>
+          <p className="text-sm text-slate-400 mb-6">{error}</p>
+          <Link
+            href="/"
+            className="inline-block bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
+          >
+            Return Home
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-zinc-100 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            Agent-to-Agent Voice Conversation
-          </h1>
-          <p className="text-zinc-400">
-            Patient Caller Agent calls Hospital Receptionist to book an appointment
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#090d16] text-slate-100 p-6 lg:p-10 flex flex-col justify-between relative overflow-hidden">
+      {/* Background ambient glow */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[160px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[160px] pointer-events-none" />
 
-        <div className="bg-zinc-800 rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-medium mb-4 text-zinc-200">
-            Patient Information
-          </h2>
-          <pre className="bg-zinc-700 p-4 rounded-md overflow-auto text-sm text-zinc-300">
-            {patientInfo || "Loading..."}
-          </pre>
-        </div>
-
-        <div className="grid grid-cols-2 gap-6 mb-6">
-          <div
-            className={`rounded-lg p-6 transition-all ${
-              patientSpeaking
-                ? "bg-blue-900/40 border-2 border-blue-500 shadow-lg shadow-blue-500/20"
-                : "bg-zinc-800"
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-3xl">🤖</span>
-              <h3 className="text-xl font-semibold">Patient Caller Agent</h3>
-              {patientSpeaking && (
-                <span className="ml-auto flex items-center gap-2">
-                  <span className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></span>
-                  <span className="text-sm text-blue-400">Speaking</span>
-                </span>
-              )}
+      <div className="max-w-7xl mx-auto w-full z-10 flex-1 flex flex-col">
+        {/* Top bar */}
+        <header className="flex items-center justify-between mb-8 pb-6 border-b border-slate-800/80">
+          <div>
+            <div className="flex items-center gap-3">
+              <Link href="/" className="text-xs text-cyan-400 hover:text-cyan-300 font-medium">
+                &larr; Exit
+              </Link>
+              <span className="text-slate-600">/</span>
+              <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold">
+                Live Spectator Mode
+              </span>
             </div>
-            <div className="min-h-[80px] bg-zinc-700/50 rounded-lg p-4">
-              {currentPatientText ? (
-                <p className="text-blue-200 text-lg">{currentPatientText}</p>
-              ) : (
-                <p className="text-zinc-500 italic">
-                  {isConnected ? "Waiting to speak..." : "Not yet connected"}
-                </p>
-              )}
-            </div>
-            {patientSpeaking && (
-              <div className="mt-4 flex items-center justify-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-2 bg-blue-500 rounded-full animate-pulse"
-                    style={{
-                      height: `${20 + Math.random() * 30}px`,
-                      animationDelay: `${i * 0.1}s`,
-                    }}
-                  />
-                ))}
-              </div>
-            )}
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+              Autonomous AI Voice Call
+            </h1>
           </div>
 
-          <div
-            className={`rounded-lg p-6 transition-all ${
-              receptionistSpeaking
-                ? "bg-green-900/40 border-2 border-green-500 shadow-lg shadow-green-500/20"
-                : "bg-zinc-800"
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-3xl">🏥</span>
-              <h3 className="text-xl font-semibold">Hospital Receptionist</h3>
-              {receptionistSpeaking && (
-                <span className="ml-auto flex items-center gap-2">
-                  <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
-                  <span className="text-sm text-green-400">Speaking</span>
-                </span>
-              )}
-            </div>
-            <div className="min-h-[80px] bg-zinc-700/50 rounded-lg p-4">
-              {currentReceptionistText ? (
-                <p className="text-green-200 text-lg">
-                  {currentReceptionistText}
-                </p>
-              ) : (
-                <p className="text-zinc-500 italic">
-                  {isConnected ? "Waiting to speak..." : "Not yet connected"}
-                </p>
-              )}
-            </div>
-            {receptionistSpeaking && (
-              <div className="mt-4 flex items-center justify-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-2 bg-green-500 rounded-full animate-pulse"
-                    style={{
-                      height: `${20 + Math.random() * 30}px`,
-                      animationDelay: `${i * 0.1}s`,
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-zinc-800 rounded-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium text-zinc-200">Transcript</h2>
+          <div className="flex items-center gap-3">
             <span
-              className={`text-sm px-3 py-1 rounded-full ${
+              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold ${
                 isConnected
-                  ? "bg-green-900/50 text-green-400"
-                  : "bg-zinc-700 text-zinc-400"
+                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  : isEnded
+                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                  : "bg-slate-800 text-slate-400 border border-slate-700"
               }`}
             >
-              {isConnected ? "Connected" : isEnded ? "Ended" : "Disconnected"}
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isConnected
+                    ? "bg-emerald-400 animate-pulse"
+                    : isEnded
+                    ? "bg-amber-400"
+                    : "bg-slate-500"
+                }`}
+              />
+              {isConnected ? "Live Session Active" : isEnded ? "Call Completed" : "Ready to Connect"}
             </span>
           </div>
+        </header>
+
+        {/* Patient Details Preview */}
+        {patientInfoObj && (
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 mb-8 backdrop-blur-md shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs uppercase tracking-wider font-semibold text-cyan-400">
+                Patient Consultation Profile
+              </h2>
+              <span className="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full">
+                Dept: <strong className="text-slate-200">{patientInfoObj.medical_department}</strong>
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="text-slate-500 block text-xs">Patient Name</span>
+                <span className="font-medium text-slate-200">
+                  {patientInfoObj.firstName} {patientInfoObj.lastName}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-xs">Email</span>
+                <span className="font-medium text-slate-200 truncate block">
+                  {patientInfoObj.email}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-xs">Phone</span>
+                <span className="font-medium text-slate-200">{patientInfoObj.phone}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-xs">Language</span>
+                <span className="font-medium text-cyan-300 uppercase">{patientInfoObj.language}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Two Agent Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Patient Agent Card */}
           <div
-            className="space-y-3 max-h-64 overflow-y-auto"
+            className={`rounded-2xl p-6 transition-all duration-300 backdrop-blur-xl border ${
+              patientSpeaking
+                ? "bg-cyan-950/30 border-cyan-500/60 shadow-xl shadow-cyan-500/10"
+                : "bg-slate-900/60 border-slate-800"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-2xl shadow-inner">
+                  🤖
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-white">Patient Caller Agent</h3>
+                  <p className="text-xs text-slate-400">Autonomous ElevenLabs Agent</p>
+                </div>
+              </div>
+              {patientSpeaking && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-medium animate-pulse">
+                  Speaking
+                </span>
+              )}
+            </div>
+
+            <div className="min-h-[100px] bg-slate-950/50 rounded-xl p-4 border border-slate-800/80 flex flex-col justify-center">
+              {currentPatientText ? (
+                <p className="text-cyan-100 text-base leading-relaxed">{currentPatientText}</p>
+              ) : (
+                <p className="text-slate-600 italic text-sm text-center">
+                  {isConnected ? "Listening & preparing speech..." : "Waiting to connect..."}
+                </p>
+              )}
+            </div>
+
+            {patientSpeaking && (
+              <div className="mt-5 flex items-center justify-center gap-1.5 h-8">
+                {[...Array(8)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1.5 bg-cyan-400 rounded-full wave-bar"
+                    style={{
+                      animationDelay: `${i * 0.15}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Hospital Receptionist Agent Card */}
+          <div
+            className={`rounded-2xl p-6 transition-all duration-300 backdrop-blur-xl border ${
+              receptionistSpeaking
+                ? "bg-blue-950/30 border-blue-500/60 shadow-xl shadow-blue-500/10"
+                : "bg-slate-900/60 border-slate-800"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-2xl shadow-inner">
+                  🏥
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-white">Hospital Receptionist</h3>
+                  <p className="text-xs text-slate-400">Booking Agent with Tool Access</p>
+                </div>
+              </div>
+              {receptionistSpeaking && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-medium animate-pulse">
+                  Speaking
+                </span>
+              )}
+            </div>
+
+            <div className="min-h-[100px] bg-slate-950/50 rounded-xl p-4 border border-slate-800/80 flex flex-col justify-center">
+              {currentReceptionistText ? (
+                <p className="text-blue-100 text-base leading-relaxed">{currentReceptionistText}</p>
+              ) : (
+                <p className="text-slate-600 italic text-sm text-center">
+                  {isConnected ? "Ready to respond..." : "Waiting to connect..."}
+                </p>
+              )}
+            </div>
+
+            {receptionistSpeaking && (
+              <div className="mt-5 flex items-center justify-center gap-1.5 h-8">
+                {[...Array(8)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1.5 bg-blue-400 rounded-full wave-bar"
+                    style={{
+                      animationDelay: `${i * 0.15}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Transcript Section */}
+        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl mb-8 flex-1 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+              Real-time Conversation Transcript
+            </h2>
+            <span className="text-xs text-slate-500">
+              {transcript.length} messages exchanged
+            </span>
+          </div>
+
+          <div
+            className="space-y-4 max-h-72 overflow-y-auto pr-2"
             id="transcript-container"
           >
             {transcript.length === 0 ? (
-              <p className="text-zinc-500 italic">
-                Transcript will appear here...
-              </p>
+              <div className="text-center py-12 text-slate-600 italic text-sm">
+                Transcript entries will appear here once the conversation starts...
+              </div>
             ) : (
               transcript.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`p-4 rounded-lg ${
+                  className={`p-4 rounded-xl border transition-all ${
                     msg.role === "receptionist"
-                      ? "bg-green-900/30 text-green-200 border-l-4 border-green-500"
-                      : "bg-blue-900/30 text-blue-200 border-l-4 border-blue-500"
+                      ? "bg-blue-950/20 border-blue-500/30 text-blue-100 ml-4 sm:ml-12"
+                      : "bg-cyan-950/20 border-cyan-500/30 text-cyan-100 mr-4 sm:mr-12"
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-medium">
-                      {msg.role === "receptionist"
-                        ? "🏥 Receptionist"
-                        : "🤖 Patient Caller"}
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold tracking-wide uppercase">
+                      {msg.role === "receptionist" ? "🏥 Hospital Receptionist" : "🤖 Patient Caller Agent"}
                     </span>
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-[10px] text-slate-500">
                       {msg.timestamp.toLocaleTimeString()}
                     </span>
                   </div>
-                  <p>{msg.text}</p>
+                  <p className="text-sm leading-relaxed">{msg.text}</p>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        <div className="flex gap-4 justify-center">
+        {/* Action Controls */}
+        <div className="flex justify-center pb-6">
           {!isConnected && !isEnded ? (
             <button
               onClick={startConversation}
               disabled={!mounted || isConnecting || !patientInfoObj}
-              className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold px-10 py-4 rounded-2xl shadow-xl shadow-cyan-500/25 disabled:opacity-50 transition-all duration-300 cursor-pointer text-base flex items-center gap-3"
             >
               {!mounted || !patientInfoObj ? (
-                "Loading..."
+                "Loading Patient Data..."
               ) : isConnecting ? (
-                <span className="flex items-center gap-2">
-                  <svg
-                    className="animate-spin h-5 w-5"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Connecting...
-                </span>
+                  Establishing Secure WebSockets...
+                </>
               ) : (
-                "🎙️ Start Conversation"
+                <>
+                  <span className="text-xl">🎙️</span> Start Autonomous Voice Conversation
+                </>
               )}
             </button>
           ) : isConnected ? (
             <button
               onClick={stopConversation}
-              className="bg-red-600 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-red-700 transition-colors"
+              className="bg-red-600 hover:bg-red-500 text-white font-bold px-10 py-4 rounded-2xl shadow-xl shadow-red-600/25 transition-all duration-300 cursor-pointer text-base flex items-center gap-2"
             >
-              Stop Conversation
+              <span>🛑</span> Stop Conversation
             </button>
           ) : null}
         </div>
 
         {isEnded && (
-          <div className="mt-8 bg-zinc-800 rounded-lg p-6 text-center">
-            <h3 className="text-xl font-medium mb-2 text-zinc-200">
-              Conversation Ended
-            </h3>
-            <p className="text-zinc-400">
-              Check the console or webhook logs for the final appointment
-              details.
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 text-center backdrop-blur-xl">
+            <h3 className="text-lg font-bold text-white mb-1">Conversation Complete</h3>
+            <p className="text-xs text-slate-400 mb-4">
+              The appointment has been successfully booked and confirmation sent.
             </p>
+            <Link
+              href="/"
+              className="inline-block bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-6 py-2.5 rounded-xl transition-colors"
+            >
+              Start New Consultation
+            </Link>
           </div>
         )}
       </div>
