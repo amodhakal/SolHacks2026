@@ -402,7 +402,8 @@ export default function SpectatePage({
                     key={i}
                     className="w-1.5 bg-cyan-400 rounded-full wave-bar"
                     style={{
-                      animationDelay: `${i * 0.15}s`,
+                      height: `${[25, 45, 30, 50, 35][i]}px`,
+                      animationDelay: `${i * 0.1}s`,
                     }}
                   />
                 ))}
@@ -452,7 +453,8 @@ export default function SpectatePage({
                     key={i}
                     className="w-1.5 bg-blue-400 rounded-full wave-bar"
                     style={{
-                      animationDelay: `${i * 0.15}s`,
+                      height: `${[25, 45, 30, 50, 35][i]}px`,
+                      animationDelay: `${i * 0.1}s`,
                     }}
                   />
                 ))}
